@@ -25,13 +25,7 @@ This package provides a modular Express router to integrate with [PayFast](https
 Install from npm:
 
 ```bash
-npm install payfast-subscribe
-```
-
-Or from GitHub (if applicable):
-
-```bash
-npm install https://github.com/maseranw/payfast-subscribe.git
+npm install @ngelekanyo/payfast-subscribe
 ```
 
 ## ⚙️ Environment Setup

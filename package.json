@@ -1,6 +1,6 @@
 {
-  "name": "payfast-subscribe",
-  "version": "1.0.3",
+  "name": "@ngelekanyo/payfast-subscribe",
+  "version": "1.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "A reusable PayFast subscription handler for Node.js",
