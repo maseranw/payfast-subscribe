@@ -22,6 +22,14 @@ interface InitiateRequestBody {
   name_last?: string;
   email_address?: string;
   m_payment_id?: string;
+  subscription_type?: number;
+  billing_date?: string;
+  recurring_amount?: string;
+  frequency?: number;
+  cycles?: number;
+  subscription_notify_email?: boolean;
+  subscription_notify_webhook?: boolean;
+  subscription_notify_buyer?: boolean;
 }
 
 interface CancelParams {
@@ -47,14 +55,26 @@ const buildPayfastRouter = (
         name_last,
         email_address,
         m_payment_id,
+        subscription_type,
+        billing_date,
+        recurring_amount,
+        frequency,
+        cycles,
+        subscription_notify_email,
+        subscription_notify_webhook,
+        subscription_notify_buyer,
       } = req.body;
 
+      // Validate required fields
       if (!amount || !item_name || !m_payment_id) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const today = new Date().toISOString().split("T")[0];
+      // Use frontend-provided billing_date or fallback to today
+      const effectiveBillingDate =
+        billing_date || new Date().toISOString().split("T")[0];
       const parsedAmount = parseFloat(amount).toFixed(2);
+      const effectiveRecurringAmount = recurring_amount || parsedAmount;
 
       const paymentData: PaymentData = {
         merchant_id: payfastConfig.merchant_id || "",
@@ -69,14 +89,14 @@ const buildPayfastRouter = (
         amount: parsedAmount,
         item_name,
         item_description,
-        subscription_type: 1,
-        billing_date: today,
-        recurring_amount: parsedAmount,
-        frequency: 3,
-        cycles: 0,
-        subscription_notify_email: true,
-        subscription_notify_webhook: true,
-        subscription_notify_buyer: true,
+        subscription_type: subscription_type || 1,
+        billing_date: effectiveBillingDate,
+        recurring_amount: effectiveRecurringAmount,
+        frequency: frequency || 3,
+        cycles: cycles || 0,
+        subscription_notify_email: subscription_notify_email || true,
+        subscription_notify_webhook: subscription_notify_webhook || true,
+        subscription_notify_buyer: subscription_notify_buyer || true,
       };
 
       const signature = generateSignatureForInitiate(
