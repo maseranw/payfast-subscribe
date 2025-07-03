@@ -14,6 +14,9 @@ This package provides a modular Express router to integrate with [PayFast](https
 - 🔄 Subscription initiation and recurring billing setup
 - 📬 ITN webhook handling with signature + source validation
 - ❌ Cancel PayFast subscriptions with retry logic
+- 🔄 Fetch PayFast subscriptions
+- 🔄 Pause PayFast subscriptions
+- 🔄 UnPause PayFast subscriptions
 - 📦 Clean, pluggable Express router with optional callbacks
 
 ## 📋 Requirements
@@ -402,13 +405,13 @@ const handleCancelSubscription = async () => {
 
 - Use PayFast Sandbox
 - Set `TESTING_MODE=true` in `.env`
-- Use tools like Postman or Insomnia to test `/initiate`, `/notify`, `/cancel`
+- Use tools like Postman or Insomnia to test `/initiate`, `/notify`, `/cancel` , `/pause` , `/unpause` , `/fetch`  
 
-## ✅ TODO (Contributions welcome)
+## ✅ TODO
 
 - Add support for once-off payments
-- Add TypeScript types
-- Support webhook retries & deduplication
+- Split Payments
+- Refunds
 - Integrate PayFast subscription query endpoint
 
 ## 👥 Maintainers
