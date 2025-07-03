@@ -51,7 +51,7 @@ In your Express server:
 ```js
 const express = require("express");
 const cors = require("cors");
-const buildPayfastRouter = require("payfast-subscribe");
+const buildPayfastRouter = require("@ngelekanyo/payfast-subscribe");
 
 const app = express();
 
@@ -117,7 +117,7 @@ app.listen(6000, () => console.log("Server running on http://localhost:6000"));
 
 # 🔗 PayFast Integration with External Backend
 
-This section demonstrates how to integrate your `payfast-subscribe` backend with a client-side or external application using a `PayFastService` class.
+This section demonstrates how to integrate your `@ngelekanyo/payfast-subscribe` backend with a client-side or external application using a `PayFastService` class.
 
 > ⚙️ This example assumes your backend is running at `http://localhost:6000` or a configured `VITE_BACKEND_URL`.
 
