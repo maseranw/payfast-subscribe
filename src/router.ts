@@ -8,6 +8,9 @@ import {
   generateApiSignature,
   fetchCsrfAndSession,
   attemptPayfastCancel,
+  attemptPayfastPause,
+  attemptPayfastFetch,
+  getCurrentIsoTimestamp,
 } from "./utils";
 
 interface PaymentData {
@@ -37,9 +40,14 @@ interface CancelParams {
   subscriptionId: string;
 }
 
+interface PauseParams {
+  token: string;
+}
+
 const buildPayfastRouter = (
   onPaymentUpdate: (payload: any) => Promise<void>,
-  onCancel: (data: any) => Promise<void>
+  onCancel: (data: any) => Promise<void>,
+  onPause: (data: any) => Promise<void>
 ): Router => {
   const router: Router = express.Router();
 
@@ -171,7 +179,7 @@ const buildPayfastRouter = (
         const headers: { [key: string]: string } = {
           "merchant-id": payfastConfig.merchant_id || "",
           version: process.env.PAYFAST_API_VERSION || "v1",
-          timestamp: new Date().toISOString(),
+          timestamp: getCurrentIsoTimestamp(),
         };
 
         headers["signature"] = generateApiSignature(
@@ -179,9 +187,8 @@ const buildPayfastRouter = (
           payfastConfig.passphrase || null
         );
 
-        const baseUrl = payfastConfig.sandbox
-          ? "https://sandbox.payfast.co.za"
-          : "https://www.payfast.co.za";
+        const baseUrl = "https://api.payfast.co.za";
+
         const testingMode = process.env.TESTING_MODE || "false";
         const cancelUrl = `${baseUrl}/subscriptions/${token}/cancel?testing=${testingMode}`;
 
@@ -195,6 +202,151 @@ const buildPayfastRouter = (
           token,
           subscriptionId,
           onCancel,
+        });
+
+        return res.status(result.status).json(result.payload);
+      } catch (error: any) {
+        return res.status(500).json({
+          error: "Internal server error",
+          details: error.message,
+        });
+      }
+    }
+  );
+
+  // === Pause Subscription ===
+  router.post(
+    "/pause/:token/",
+    async (req: Request<PauseParams>, res: Response) => {
+      try {
+        const { token } = req.params;
+
+        if (!token) {
+          return res.status(400).json({ error: "Token is required" });
+        }
+
+        const headers: { [key: string]: string } = {
+          "merchant-id": payfastConfig.merchant_id || "",
+          version: process.env.PAYFAST_API_VERSION || "v1",
+          timestamp: getCurrentIsoTimestamp()
+        };
+
+        headers["signature"] = generateApiSignature(
+          headers,
+          payfastConfig.passphrase || null
+        );
+
+        const baseUrl = "https://api.payfast.co.za";
+
+        const testingMode = process.env.TESTING_MODE || "false";
+        const cancelUrl = `${baseUrl}/subscriptions/${token}/pause?testing=${testingMode}`;
+
+        const { csrfToken, sessionCookie } = await fetchCsrfAndSession(baseUrl);
+        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
+        if (sessionCookie) headers["Cookie"] = sessionCookie;
+
+        const result = await attemptPayfastPause({
+          url: cancelUrl,
+          headers,
+          token,
+          onPause,
+        });
+
+        return res.status(result.status).json(result.payload);
+      } catch (error: any) {
+        return res.status(500).json({
+          error: "Internal server error",
+          details: error.message,
+        });
+      }
+    }
+  );
+
+   // === UnPause Subscription ===
+  router.post(
+    "/unpause/:token/",
+    async (req: Request<PauseParams>, res: Response) => {
+      try {
+        const { token } = req.params;
+
+        if (!token) {
+          return res.status(400).json({ error: "Token is required" });
+        }
+
+        const headers: { [key: string]: string } = {
+          "merchant-id": payfastConfig.merchant_id || "",
+          version: process.env.PAYFAST_API_VERSION || "v1",
+          timestamp: getCurrentIsoTimestamp()
+        };
+
+        headers["signature"] = generateApiSignature(
+          headers,
+          payfastConfig.passphrase || null
+        );
+
+        const baseUrl = "https://api.payfast.co.za";
+
+        const testingMode = process.env.TESTING_MODE || "false";
+        const cancelUrl = `${baseUrl}/subscriptions/${token}/pause?testing=${testingMode}`;
+
+        const { csrfToken, sessionCookie } = await fetchCsrfAndSession(baseUrl);
+        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
+        if (sessionCookie) headers["Cookie"] = sessionCookie;
+
+        const result = await attemptPayfastPause({
+          url: cancelUrl,
+          headers,
+          token,
+          onPause,
+        });
+
+        return res.status(result.status).json(result.payload);
+      } catch (error: any) {
+        return res.status(500).json({
+          error: "Internal server error",
+          details: error.message,
+        });
+      }
+    }
+  );
+
+  // === Fetch Subscription ===
+  router.get(
+    "/fetch/:token/",
+    async (req: Request<PauseParams>, res: Response) => {
+      try {
+        const { token } = req.params;
+
+        if (!token) {
+          return res.status(400).json({ error: "Token is required" });
+        }
+
+        const headers: { [key: string]: string } = {
+          "merchant-id": payfastConfig.merchant_id || "",
+          version: process.env.PAYFAST_API_VERSION || "v1",
+          timestamp: getCurrentIsoTimestamp(),
+        };
+
+          headers["signature"] = generateApiSignature(
+          headers,
+          payfastConfig.passphrase || null
+        );
+
+        const baseUrl = "https://api.payfast.co.za";
+
+        const testingMode = process.env.TESTING_MODE || "false";
+        const cancelUrl = `${baseUrl}/subscriptions/${token}/fetch?testing=${testingMode}`;
+
+        const { csrfToken, sessionCookie } = await fetchCsrfAndSession(baseUrl);
+        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
+        if (sessionCookie) headers["Cookie"] = sessionCookie;
+
+        console.log("baseUrl:", baseUrl);
+        const result = await attemptPayfastFetch({
+          url: cancelUrl,
+          headers,
+          token,
+          onPause,
         });
 
         return res.status(result.status).json(result.payload);
