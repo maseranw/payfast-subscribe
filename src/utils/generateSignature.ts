@@ -1,8 +1,6 @@
 import { createHash } from "crypto";
+import { PaymentData } from "../types";
 
-interface PaymentData {
-  [key: string]: string | number | boolean | undefined;
-}
 
 const generateSignature = (data: PaymentData, passphrase: string | null = null): string => {
   const fieldOrder = [

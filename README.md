@@ -267,6 +267,7 @@ PayFastService.cancelSubscription("token123", "SUB12345").catch((err) =>
 | POST   | `/api/payfast/initiate`                      | Generate PayFast payment data + URL           |
 | POST   | `/api/payfast/notify`                        | Handle ITN (Instant Transaction Notification) |
 | POST   | `/api/payfast/cancel/:token/:subscriptionId` | Cancel an active PayFast subscription         |
+| POST   | `/api/payfast/cancel/:token`                 | Cancel an active PayFast subscription         |
 | POST   | `/api/payfast/pause/:token`                  | Pause an active subscription                   |
 | POST   | `/api/payfast/unpause/:token`                | Unpause a paused subscription                  |
 | GET    | `/api/payfast/fetch/:token`                   | Fetch subscription details                      |

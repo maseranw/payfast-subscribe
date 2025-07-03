@@ -1,6 +1,6 @@
 {
   "name": "@ngelekanyo/payfast-subscribe",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "A reusable PayFast subscription handler for Node.js",
@@ -36,8 +36,8 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "express": "^4.21.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
   },
   "files": [
     "dist/**/*",

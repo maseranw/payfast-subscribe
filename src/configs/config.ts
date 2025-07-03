@@ -1,16 +1,8 @@
 import { config as dotenvConfig } from "dotenv";
+import { PayfastConfig } from "../types";
 
 dotenvConfig();
 
-interface PayfastConfig {
-  sandbox: boolean;
-  merchant_id: string | undefined;
-  merchant_key: string | undefined;
-  passphrase: string;
-  return_url: string;
-  cancel_url: string;
-  notify_url: string;
-}
 
 const payfastConfig: PayfastConfig = {
   sandbox: process.env.NODE_ENV !== "production",
