@@ -1,3 +1,4 @@
+// utils.ts (Refactored)
 import { createHash } from "crypto";
 import axios from "axios";
 import qs from "querystring";
@@ -11,29 +12,23 @@ interface PfData {
   [key: string]: string;
 }
 
-interface CancelArgs {
+interface RequestArgs {
+  method: "GET" | "PUT";
   url: string;
   headers: { [key: string]: string };
   token: string;
-  subscriptionId: string;
-  onCancel?: (data: any) => Promise<void>;
+  subscriptionId?: string;
+  callback?: (data: any) => Promise<void>;
 }
 
-interface CancelResult {
+interface RequestResult {
   status: number;
   payload: any;
 }
 
-interface PauseArgs {
-  url: string;
-  headers: { [key: string]: string };
-  token: string;
-  onPause?: (data: any) => Promise<void>;
-}
-
-interface PauseResult {
-  status: number;
-  payload: any;
+interface CsrfSession {
+  csrfToken: string | null;
+  sessionCookie: string | null;
 }
 
 const generateSignatureForInitiate = (
@@ -171,31 +166,19 @@ const generateApiSignature = (
 
   const pfParamString = encodedPairs.join("&");
 
-  console.log("pfParamString:",pfParamString)
-
   return createHash("md5").update(pfParamString).digest("hex");
 };
 
-const getCurrentIsoTimestamp = (): string =>{
+const getCurrentIsoTimestamp = (): string => {
   const date = new Date();
-
-  // Get timezone offset in minutes and convert to ±HH:MM format
   const offsetMinutes = -date.getTimezoneOffset();
   const sign = offsetMinutes >= 0 ? "+" : "-";
   const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, "0");
-
   const hours = pad(offsetMinutes / 60);
   const minutes = pad(offsetMinutes % 60);
-
-  const isoString = date.toISOString().slice(0, 19); // "YYYY-MM-DDTHH:MM:SS"
-
+  const isoString = date.toISOString().slice(0, 19);
   return `${isoString}${sign}${hours}:${minutes}`;
 };
-
-interface CsrfSession {
-  csrfToken: string | null;
-  sessionCookie: string | null;
-}
 
 const fetchCsrfAndSession = async (baseUrl: string): Promise<CsrfSession> => {
   try {
@@ -218,94 +201,52 @@ const fetchCsrfAndSession = async (baseUrl: string): Promise<CsrfSession> => {
   }
 };
 
-const attemptPayfastPause = async ({
-  url,
-  headers,
-  token,
-  onPause,
-}: PauseArgs): Promise<PauseResult> => {
-  const maxRetries = 2;
-  let attempt = 0;
-
-  while (attempt < maxRetries) {
-    try {
-      const response = await axios.put(url, null, {
-        headers,
-        timeout: 10000,
-      });
-
-      if (typeof onPause === "function") {
-        await onPause({
-          token,
-          status: response.status,
-          payload: response.data,
-        });
-      }
-
-      return {
-        status: 200,
-        payload: {
-          message: response.data.message,
-          data: response.data,
-        },
-      };
-    } catch (error: any) {
-      if (error.response?.status === 419 && attempt < maxRetries - 1) {
-        const baseUrl = url.split("/subscriptions")[0];
-        const { csrfToken, sessionCookie } = await fetchCsrfAndSession(baseUrl);
-        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
-        if (sessionCookie) headers["Cookie"] = sessionCookie;
-        attempt++;
-        continue;
-      }
-
-      return {
-        status: error.response?.status || 500,
-        payload: {
-          error:
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to cancel subscription",
-          details: error.response?.data || {},
-        },
-      };
-    }
-  }
-
-  return {
-    status: 500,
-    payload: { error: "Max retry attempts exceeded" },
+const buildSignedHeaders = async (
+  passphrase: string | null
+): Promise<{ [key: string]: string }> => {
+  const headers: { [key: string]: string } = {
+    "merchant-id": payfastConfig.merchant_id || "",
+    version: process.env.PAYFAST_API_VERSION || "v1",
+    timestamp: getCurrentIsoTimestamp(),
   };
+  headers["signature"] = generateApiSignature(headers, passphrase);
+  return headers;
 };
 
-const attemptPayfastCancel = async ({
+const attemptPayfastRequest = async ({
+  method,
   url,
   headers,
   token,
   subscriptionId,
-  onCancel,
-}: CancelArgs): Promise<CancelResult> => {
+  callback,
+}: RequestArgs): Promise<RequestResult> => {
   const maxRetries = 2;
   let attempt = 0;
 
   while (attempt < maxRetries) {
     try {
-      const response = await axios.put(url, null, {
+      const axiosConfig = {
+        method,
+        url,
         headers,
         timeout: 10000,
-      });
+        ...(method === "PUT" ? { data: null } : {}),
+      };
 
-      if (typeof onCancel === "function") {
-        await onCancel({
+      const response = await axios(axiosConfig);
+
+      if (typeof callback === "function") {
+        await callback({
+          token,
           subscriptionId,
-          token,
           status: response.status,
           payload: response.data,
         });
       }
 
       return {
-        status: 200,
+        status: response.status,
         payload: {
           message: response.data.message,
           data: response.data,
@@ -325,71 +266,7 @@ const attemptPayfastCancel = async ({
         status: error.response?.status || 500,
         payload: {
           error:
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to cancel subscription",
-          details: error.response?.data || {},
-        },
-      };
-    }
-  }
-
-  return {
-    status: 500,
-    payload: { error: "Max retry attempts exceeded" },
-  };
-};
-
-const attemptPayfastFetch = async ({
-  url,
-  headers,
-  token,
-  onPause,
-}: PauseArgs): Promise<PauseResult> => {
-  const maxRetries = 2;
-  let attempt = 0;
-
-  while (attempt < maxRetries) {
-    try {
-      const response = await axios.get(url, {
-        headers,
-        timeout: 10000,
-      });
-
-      if (typeof onPause === "function") {
-        await onPause({
-          token,
-          status: response.status,
-          payload: response.data,
-        });
-      }
-
-      return {
-        status: 200,
-        payload: {
-          message: response.data.message,
-          data: response.data,
-        },
-      };
-    } catch (error: any) {
-        console.log("ERROR:", error);
-
-      if (error.response?.status === 419 && attempt < maxRetries - 1) {
-        const baseUrl = url.split("/subscriptions")[0];
-        const { csrfToken, sessionCookie } = await fetchCsrfAndSession(baseUrl);
-        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
-        if (sessionCookie) headers["Cookie"] = sessionCookie;
-        attempt++;
-        continue;
-      }
-
-      return {
-        status: error.response?.status || 500,
-        payload: {
-          error:
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to fetch subscription",
+            error.response?.data?.message || error.message || "Request failed",
           details: error.response?.data || {},
         },
       };
@@ -409,8 +286,7 @@ export {
   validateITNWithPayfast,
   generateApiSignature,
   fetchCsrfAndSession,
-  attemptPayfastCancel,
-  attemptPayfastPause,
-  attemptPayfastFetch,
-  getCurrentIsoTimestamp
+  getCurrentIsoTimestamp,
+  buildSignedHeaders,
+  attemptPayfastRequest,
 };

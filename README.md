@@ -1,3 +1,4 @@
+
 # PayFast Subscription Integration (Node.js/Express)
 
 This package provides a modular Express router to integrate with [PayFast](https://www.payfast.co.za/) for managing subscription payments, including:
@@ -69,11 +70,47 @@ const handleCancel = async ({ token, subscriptionId, status, payload }) => {
   // e.g., mark subscription as cancelled in your system
 };
 
+const handlePause = async ({ token, status, payload }) => {
+  console.log("⏸️ Pause callback called:", {
+    token,
+    status,
+    payload,
+  });
+  // e.g., mark subscription as paused in your system
+};
+
+const handleUnpause = async ({ token, status, payload }) => {
+  console.log("▶️ Unpause callback called:", {
+    token,
+    status,
+    payload,
+  });
+  // e.g., resume subscription in your system
+};
+
+const handleFetch = async ({ token, status, payload }) => {
+  console.log("📄 Fetch callback called:", {
+    token,
+    status,
+    payload,
+  });
+  // e.g., update subscription status from fetch data
+};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/payfast", buildPayfastRouter(handlePaymentUpdate, handleCancel));
+app.use(
+  "/api/payfast",
+  buildPayfastRouter(
+    handlePaymentUpdate,
+    handleCancel,
+    handlePause,
+    handleUnpause,
+    handleFetch
+  )
+);
 
 app.listen(6000, () => console.log("Server running on http://localhost:6000"));
 ```
@@ -230,6 +267,9 @@ PayFastService.cancelSubscription("token123", "SUB12345").catch((err) =>
 | POST   | `/api/payfast/initiate`                      | Generate PayFast payment data + URL           |
 | POST   | `/api/payfast/notify`                        | Handle ITN (Instant Transaction Notification) |
 | POST   | `/api/payfast/cancel/:token/:subscriptionId` | Cancel an active PayFast subscription         |
+| POST   | `/api/payfast/pause/:token`                  | Pause an active subscription                   |
+| POST   | `/api/payfast/unpause/:token`                | Unpause a paused subscription                  |
+| GET    | `/api/payfast/fetch/:token`                   | Fetch subscription details                      |
 
 ## 🧠 Callbacks
 
@@ -251,6 +291,42 @@ Called after a cancellation attempt. Includes final result.
 const onCancel = async ({ token, subscriptionId, status, payload }) => {
   if (status !== 200) {
     console.error("Cancel failed:", payload);
+  }
+};
+```
+
+### `onPause({ token, status, payload })`
+
+Called after a pause attempt.
+
+```js
+const onPause = async ({ token, status, payload }) => {
+  if (status !== 200) {
+    console.error("Pause failed:", payload);
+  }
+};
+```
+
+### `onUnpause({ token, status, payload })`
+
+Called after an unpause attempt.
+
+```js
+const onUnpause = async ({ token, status, payload }) => {
+  if (status !== 200) {
+    console.error("Unpause failed:", payload);
+  }
+};
+```
+
+### `onFetch({ token, status, payload })`
+
+Called after fetching subscription details.
+
+```js
+const onFetch = async ({ token, status, payload }) => {
+  if (status !== 200) {
+    console.error("Fetch failed:", payload);
   }
 };
 ```
@@ -325,7 +401,7 @@ const handleCancelSubscription = async () => {
 
 - Use PayFast Sandbox
 - Set `TESTING_MODE=true` in `.env`
-- Use tools like Postman or Insomnia to test `/initiate`, `/notify`, and `/cancel`
+- Use tools like Postman or Insomnia to test `/initiate`, `/notify`, `/cancel`
 
 ## ✅ TODO (Contributions welcome)
 
