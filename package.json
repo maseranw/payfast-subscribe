@@ -19,9 +19,6 @@
     "type": "git",
     "url": "git+https://github.com/maseranw/payfast-subscribe.git"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
