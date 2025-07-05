@@ -401,6 +401,21 @@ const handleCancelSubscription = async () => {
 - Retry logic for expired CSRF/session (e.g., HTTP 419)
 - 👉 [PayFast Developer Docs](https://developers.payfast.co.za/docs)
 
+## ⚠️ Pause/Unpause Disclaimer
+
+> **Important Notice:**  
+> The `pause` and `unpause` subscription features provided by this package rely on PayFast's native subscription behavior. Please review the following carefully before implementing:
+
+- Pausing a subscription **does not cancel it** — it only delays future billing by the number of paused cycles (e.g. `cycles: 1` = 1 billing interval).
+- The **subscription end date is automatically extended** by PayFast for each paused cycle.
+- **Unpausing early** (before the pause period ends) will **not adjust the next billing date** — billing still resumes after the full pause duration.
+- ⚠️ This may result in a user receiving more than a full billing cycle of access without being charged, unless you **enforce access control** on your side.
+- This package does **not automatically manage user access** during pause periods. You must implement that logic in your backend or authorization layer.
+
+📚 For accurate and up-to-date details on PayFast's pause/unpause behavior, refer to the official PayFast documentation:
+
+👉 [PayFast Developer Docs](https://developers.payfast.co.za/docs)
+
 ## 🧪 Testing Tips
 
 - Use PayFast Sandbox
