@@ -1,0 +1,55 @@
+{
+  "name": "@ngelekanyo/payfast-subscribe",
+  "version": "1.0.18",
+  "main": "dist/cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "A reusable PayFast subscription handler for Node.js",
+  "author": "Ngelekanyo Masera <ngelekanyo@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "payfast",
+    "subscription",
+    "nodejs",
+    "express",
+    "payment",
+    "gateway",
+    "subscriptions"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maseranw/payfast-subscribe.git"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc && node scripts/cjs-wrapper.js",
+    "dev": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "dotenv": "^17.0.0",
+    "md5": "^2.3.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.23",
+    "@types/md5": "^2.3.5",
+    "@types/node": "^20.19.4",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2 || ^5.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "package.json",
+    "README.md"
+  ],
+  "bugs": {
+    "url": "https://github.com/maseranw/payfast-subscribe/issues"
+  },
+  "homepage": "https://github.com/maseranw/payfast-subscribe#readme"
+}
